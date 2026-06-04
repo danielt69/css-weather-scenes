@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CSS Weather Scenes &mdash; Pure CSS, No Images, No JS</title>
+    <meta name="description"
+        content="Six animated weather scenes — clear day, clear night, rain, snow, thunderstorm and fog — built with nothing but HTML and CSS. No images, no JavaScript, no libraries.">
+    <meta name="author" content="Daniel Tsionit">
+    <meta name="color-scheme" content="dark">
+    <meta property="og:title" content="CSS Weather Scenes — Pure CSS">
+    <meta property="og:description"
+        content="Six animated weather scenes built with nothing but HTML and CSS. No images, no JavaScript.">
+    <meta property="og:type" content="website">
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%85%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --card-radius: 22px;
+            --gap: clamp(1rem, 2.4vw, 1.6rem);
+            --ink: #e9edf5;
+            --muted: #9aa3b5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(1200px 700px at 15% -10%, #1b2440 0%, transparent 55%),
+                radial-gradient(1100px 800px at 95% 110%, #241a38 0%, transparent 55%),
+                #0a0d16;
+            min-height: 100vh;
+            padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3.5rem) 4rem;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---------- Header ---------- */
+        header {
+            max-width: 1180px;
+            margin: 0 auto clamp(1.8rem, 4vw, 2.8rem);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 5.5vw, 3.2rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            background: linear-gradient(180deg, #ffffff 0%, #aab6d8 130%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sub {
+            margin: 0.85rem auto 0;
+            max-width: 52ch;
+            color: var(--muted);
+            font-size: clamp(0.95rem, 2.4vw, 1.08rem);
+        }
+
+        .sub code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.9em;
+            color: #cdd5e8;
+            background: rgba(255, 255, 255, 0.07);
+            padding: 0.1em 0.45em;
+            border-radius: 6px;
+        }
+
+        /* ---------- Gallery grid ---------- */
+        .gallery {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--gap);
+        }
+
+        @media (max-width: 700px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        figure.card {
+            position: relative;
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            background: #0e1320;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 1px 0 rgba(255, 255, 255, 0.05) inset,
+                0 18px 40px -18px rgba(0, 0, 0, 0.7);
+            transition: transform 0.4s cubic-bezier(.2, .7, .2, 1), box-shadow 0.4s;
+        }
+
+        figure.card:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 1px 0 rgba(255, 255, 255, 0.08) inset,
+                0 28px 55px -20px rgba(0, 0, 0, 0.8);
+        }
+
+        .scene {
+            position: relative;
+            aspect-ratio: 16 / 11;
+            overflow: hidden;
+        }
+
+        figcaption {
+            padding: 0.95rem 1.15rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        figcaption .name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        figcaption .name .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        figcaption .cap {
+            color: var(--muted);
+            font-size: 0.86rem;
+        }
+
+        /* =================================================================
+           SCENE 1 — CLEAR DAY
+        ================================================================= */
+        .sky-day {
+            background: linear-gradient(180deg, #5fb6ff 0%, #aee0ff 55%, #ffe8b0 100%);
+        }
+
+        .sun {
+            position: absolute;
+            top: 26%;
+            left: 50%;
+            width: 86px;
+            height: 86px;
+            margin: -43px 0 0 -43px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 38% 34%, #fff7d6, #ffd54a 60%, #ffb01f 100%);
+            box-shadow: 0 0 40px 12px rgba(255, 199, 64, 0.65);
+            animation: sun-pulse 5s ease-in-out infinite;
+        }
+
+        .sun::before {
+            /* rotating rays */
+            content: "";
+            position: absolute;
+            inset: -46px;
+            border-radius: 50%;
+            background:
+                repeating-conic-gradient(from 0deg,
+                    rgba(255, 221, 120, 0.55) 0deg 6deg,
+                    transparent 6deg 22deg);
+            -webkit-mask: radial-gradient(circle, transparent 46px, #000 48px, #000 78px, transparent 80px);
+            mask: radial-gradient(circle, transparent 46px, #000 48px, #000 78px, transparent 80px);
+            animation: spin 24s linear infinite;
+        }
+
+        @keyframes sun-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 40px 12px rgba(255, 199, 64, 0.6);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 56px 18px rgba(255, 199, 64, 0.8);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* a lazy drifting day cloud */
+        .day-cloud {
+            position: absolute;
+            bottom: 16%;
+            left: -30%;
+            animation: drift-r 26s linear infinite;
+        }
+
+        /* =================================================================
+           SCENE 2 — CLEAR NIGHT
+        ================================================================= */
+        .sky-night {
+            background: linear-gradient(180deg, #0a1230 0%, #142353 50%, #2a2f63 100%);
+        }
+
+        .moon {
+            position: absolute;
+            top: 24%;
+            left: 64%;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 32%, #fdfdf3, #d7d9e6 70%, #b9bdd2 100%);
+            box-shadow: 0 0 34px 6px rgba(220, 226, 255, 0.45);
+            animation: moon-glow 7s ease-in-out infinite;
+        }
+
+        /* crater shading via offset shadow ball */
+        .moon::after {
+            content: "";
+            position: absolute;
+            top: -10%;
+            left: 22%;
+            width: 92%;
+            height: 92%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 70% 60%, transparent 56%, #0a1230 60%);
+            opacity: 0.55;
+        }
+
+        @keyframes moon-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px 5px rgba(220, 226, 255, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 42px 9px rgba(220, 226, 255, 0.6);
+            }
+        }
+
+        .stars {
+            position: absolute;
+            inset: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.8);
+            animation: twinkle 3.2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.15;
+                transform: scale(0.7);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* =================================================================
+           SCENE 3 — RAIN
+        ================================================================= */
+        .sky-rain {
+            background: linear-gradient(180deg, #4a5568 0%, #6b7689 55%, #8a93a6 100%);
+        }
+
+        .rain {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .drop {
+            position: absolute;
+            top: -12%;
+            width: 2px;
+            height: 16px;
+            border-radius: 2px;
+            background: linear-gradient(transparent, rgba(200, 222, 255, 0.85));
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(330px);
+                opacity: 0.9;
+            }
+        }
+
+        /* =================================================================
+           SCENE 4 — SNOW
+        ================================================================= */
+        .sky-snow {
+            background: linear-gradient(180deg, #6f7f9e 0%, #93a4c4 55%, #c2cee3 100%);
+        }
+
+        .snow {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .flake {
+            position: absolute;
+            top: -8%;
+            color: #fff;
+            font-size: 14px;
+            line-height: 1;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            animation: snow-fall linear infinite;
+        }
+
+        @keyframes snow-fall {
+            0% {
+                transform: translate(0, -20px) rotate(0deg);
+                opacity: 0;
+            }
+
+            12% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(var(--sway, 14px), 330px) rotate(360deg);
+                opacity: 0.9;
+            }
+        }
+
+        /* =================================================================
+           SCENE 5 — THUNDERSTORM
+        ================================================================= */
+        .sky-storm {
+            background: linear-gradient(180deg, #1c2130 0%, #2c3346 55%, #3a4256 100%);
+        }
+
+        .flash {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.95), rgba(180, 205, 255, 0.4) 40%, transparent 70%);
+            opacity: 0;
+            mix-blend-mode: screen;
+            animation: lightning 6s linear infinite;
+        }
+
+        /* the jagged bolt */
+        .bolt {
+            position: absolute;
+            top: 38%;
+            left: 46%;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            border-left: 7px solid transparent;
+            border-right: 11px solid transparent;
+            border-top: 46px solid #fff7c2;
+            filter: drop-shadow(0 0 8px #fff3a0);
+            transform: skewX(-8deg);
+            animation: bolt-flash 6s linear infinite;
+        }
+
+        .bolt::after {
+            content: "";
+            position: absolute;
+            top: 40px;
+            left: -3px;
+            border-left: 5px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 30px solid #fff7c2;
+            transform: skewX(10deg);
+        }
+
+        @keyframes lightning {
+
+            0%,
+            93%,
+            100% {
+                opacity: 0;
+            }
+
+            94% {
+                opacity: 0.9;
+            }
+
+            95% {
+                opacity: 0.15;
+            }
+
+            96% {
+                opacity: 0.85;
+            }
+
+            97% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes bolt-flash {
+
+            0%,
+            93.5%,
+            100% {
+                opacity: 0;
+            }
+
+            94% {
+                opacity: 1;
+            }
+
+            96.5% {
+                opacity: 1;
+            }
+
+            97% {
+                opacity: 0;
+            }
+        }
+
+        .storm-rain .drop {
+            background: linear-gradient(transparent, rgba(170, 190, 230, 0.7));
+        }
+
+        /* =================================================================
+           SCENE 6 — FOG
+        ================================================================= */
+        .sky-fog {
+            background: linear-gradient(180deg, #3a4150 0%, #555c6b 50%, #757b88 100%);
+        }
+
+        .fog-bank {
+            position: absolute;
+            left: -60%;
+            width: 220%;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(226, 230, 238, 0.55), rgba(226, 230, 238, 0) 72%);
+            filter: blur(4px);
+            animation: fog-drift linear infinite;
+        }
+
+        @keyframes fog-drift {
+            0% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(14%);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        /* =================================================================
+           SHARED — CLOUDS
+        ================================================================= */
+        .cloud {
+            position: absolute;
+            width: 110px;
+            height: 36px;
+            background: #f3f6fb;
+            border-radius: 40px;
+            opacity: 0.95;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: "";
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 52px;
+            height: 52px;
+            top: -24px;
+            left: 18px;
+        }
+
+        .cloud::after {
+            width: 38px;
+            height: 38px;
+            top: -16px;
+            left: 56px;
+        }
+
+        .cloud.dark {
+            background: #4b5468;
+            opacity: 0.96;
+        }
+
+        .cloud.grey {
+            background: #c4ccda;
+        }
+
+        .drift-slow {
+            animation: drift-r 30s linear infinite;
+        }
+
+        .drift-mid {
+            animation: drift-r 22s linear infinite;
+        }
+
+        @keyframes drift-r {
+            from {
+                transform: translateX(-40px);
+            }
+
+            to {
+                transform: translateX(420px);
+            }
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            max-width: 1180px;
+            margin: clamp(2.4rem, 6vw, 4rem) auto 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #b9c4e0;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(185, 196, 224, 0.35);
+        }
+
+        footer a:hover {
+            color: #fff;
+        }
+
+        /* =================================================================
+           REDUCED MOTION — freeze everything
+        ================================================================= */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            /* keep elements in a pleasant resting state */
+            .drop,
+            .flake {
+                opacity: 0.7;
+            }
+
+            .day-cloud,
+            .cloud {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>CSS Weather Scenes</h1>
+        <p class="sub">Six animated weather scenes built with nothing but HTML and CSS &mdash; no images, no
+            JavaScript, no libraries. Every drop, ray and flash is a <code>@keyframes</code>.</p>
+    </header>
+
+    <main class="gallery">
+
+        <!-- 1. CLEAR DAY -->
+        <figure class="card">
+            <div class="scene sky-day">
+                <div class="sun"></div>
+                <div class="cloud grey day-cloud"></div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#ffc740"></span>Clear Day</span>
+                <span class="cap">Warm sky, pulsing sun with slowly rotating rays.</span>
+            </figcaption>
+        </figure>
+
+        <!-- 2. CLEAR NIGHT -->
+        <figure class="card">
+            <div class="scene sky-night">
+                <div class="stars">
+                    <span class="star" style="top:18%;left:12%;animation-delay:0s"></span>
+                    <span class="star" style="top:30%;left:28%;animation-delay:1.1s"></span>
+                    <span class="star" style="top:12%;left:44%;animation-delay:.4s"></span>
+                    <span class="star" style="top:46%;left:20%;animation-delay:1.8s"></span>
+                    <span class="star" style="top:22%;left:80%;animation-delay:.7s"></span>
+                    <span class="star" style="top:56%;left:38%;animation-delay:2.3s"></span>
+                    <span class="star" style="top:64%;left:72%;animation-delay:1.4s"></span>
+                    <span class="star" style="top:38%;left:90%;animation-delay:.2s"></span>
+                    <span class="star" style="top:72%;left:14%;animation-delay:2.0s"></span>
+                    <span class="star" style="top:8%;left:62%;animation-delay:1.6s"></span>
+                    <span class="star" style="top:50%;left:54%;animation-delay:.9s"></span>
+                    <span class="star" style="top:80%;left:48%;animation-delay:2.6s"></span>
+                </div>
+                <div class="moon"></div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#dce2ff"></span>Clear Night</span>
+                <span class="cap">Glowing moon over a field of twinkling stars.</span>
+            </figcaption>
+        </figure>
+
+        <!-- 3. RAIN -->
+        <figure class="card">
+            <div class="scene sky-rain">
+                <div class="cloud grey drift-slow" style="top:14%;left:8%"></div>
+                <div class="cloud drift-mid" style="top:26%;left:46%;transform:scale(.85)"></div>
+                <div class="rain">
+                    <span class="drop" style="left:8%;animation-duration:.7s;animation-delay:0s"></span>
+                    <span class="drop" style="left:16%;animation-duration:.85s;animation-delay:.3s"></span>
+                    <span class="drop" style="left:24%;animation-duration:.6s;animation-delay:.15s"></span>
+                    <span class="drop" style="left:33%;animation-duration:.9s;animation-delay:.5s"></span>
+                    <span class="drop" style="left:41%;animation-duration:.7s;animation-delay:.2s"></span>
+                    <span class="drop" style="left:50%;animation-duration:.8s;animation-delay:.45s"></span>
+                    <span class="drop" style="left:58%;animation-duration:.65s;animation-delay:.1s"></span>
+                    <span class="drop" style="left:67%;animation-duration:.9s;animation-delay:.35s"></span>
+                    <span class="drop" style="left:75%;animation-duration:.7s;animation-delay:.55s"></span>
+                    <span class="drop" style="left:84%;animation-duration:.8s;animation-delay:.25s"></span>
+                    <span class="drop" style="left:92%;animation-duration:.6s;animation-delay:.4s"></span>
+                    <span class="drop" style="left:12%;animation-duration:.95s;animation-delay:.6s"></span>
+                    <span class="drop" style="left:38%;animation-duration:.75s;animation-delay:.7s"></span>
+                    <span class="drop" style="left:62%;animation-duration:.85s;animation-delay:.65s"></span>
+                    <span class="drop" style="left:88%;animation-duration:.7s;animation-delay:.5s"></span>
+                </div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#c8deff"></span>Rain</span>
+                <span class="cap">Drifting clouds and staggered falling streaks.</span>
+            </figcaption>
+        </figure>
+
+        <!-- 4. SNOW -->
+        <figure class="card">
+            <div class="scene sky-snow">
+                <div class="cloud drift-slow" style="top:14%;left:10%"></div>
+                <div class="snow">
+                    <span class="flake" style="left:6%;font-size:12px;animation-duration:6s;animation-delay:0s;--sway:18px">&#10052;</span>
+                    <span class="flake" style="left:15%;font-size:16px;animation-duration:8s;animation-delay:1.5s;--sway:-12px">&#10052;</span>
+                    <span class="flake" style="left:24%;font-size:10px;animation-duration:5s;animation-delay:.7s;--sway:22px">&#10052;</span>
+                    <span class="flake" style="left:33%;font-size:14px;animation-duration:7s;animation-delay:2.2s;--sway:-16px">&#10052;</span>
+                    <span class="flake" style="left:42%;font-size:11px;animation-duration:6.5s;animation-delay:.4s;--sway:14px">&#10052;</span>
+                    <span class="flake" style="left:51%;font-size:18px;animation-duration:9s;animation-delay:1.1s;--sway:-20px">&#10052;</span>
+                    <span class="flake" style="left:60%;font-size:12px;animation-duration:5.5s;animation-delay:2.8s;--sway:16px">&#10052;</span>
+                    <span class="flake" style="left:69%;font-size:15px;animation-duration:7.5s;animation-delay:.9s;--sway:-14px">&#10052;</span>
+                    <span class="flake" style="left:78%;font-size:10px;animation-duration:6s;animation-delay:1.9s;--sway:20px">&#10052;</span>
+                    <span class="flake" style="left:87%;font-size:14px;animation-duration:8.5s;animation-delay:.3s;--sway:-18px">&#10052;</span>
+                    <span class="flake" style="left:94%;font-size:12px;animation-duration:6.8s;animation-delay:2.5s;--sway:12px">&#10052;</span>
+                    <span class="flake" style="left:38%;font-size:13px;animation-duration:7.2s;animation-delay:3.4s;--sway:-22px">&#10052;</span>
+                </div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#ffffff"></span>Snow</span>
+                <span class="cap">Snowflakes drifting and tumbling at varied speeds.</span>
+            </figcaption>
+        </figure>
+
+        <!-- 5. THUNDERSTORM -->
+        <figure class="card">
+            <div class="scene sky-storm">
+                <div class="flash"></div>
+                <div class="cloud dark drift-slow" style="top:10%;left:6%"></div>
+                <div class="cloud dark drift-mid" style="top:20%;left:48%;transform:scale(.9)"></div>
+                <div class="bolt"></div>
+                <div class="rain storm-rain">
+                    <span class="drop" style="left:14%;animation-duration:.6s;animation-delay:.1s"></span>
+                    <span class="drop" style="left:28%;animation-duration:.75s;animation-delay:.4s"></span>
+                    <span class="drop" style="left:40%;animation-duration:.55s;animation-delay:.2s"></span>
+                    <span class="drop" style="left:55%;animation-duration:.8s;animation-delay:.5s"></span>
+                    <span class="drop" style="left:68%;animation-duration:.6s;animation-delay:.15s"></span>
+                    <span class="drop" style="left:80%;animation-duration:.7s;animation-delay:.35s"></span>
+                    <span class="drop" style="left:90%;animation-duration:.65s;animation-delay:.55s"></span>
+                    <span class="drop" style="left:20%;animation-duration:.85s;animation-delay:.65s"></span>
+                    <span class="drop" style="left:48%;animation-duration:.6s;animation-delay:.3s"></span>
+                    <span class="drop" style="left:74%;animation-duration:.75s;animation-delay:.45s"></span>
+                </div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#fff3a0"></span>Thunderstorm</span>
+                <span class="cap">Dark clouds, driving rain and a periodic lightning bolt.</span>
+            </figcaption>
+        </figure>
+
+        <!-- 6. FOG -->
+        <figure class="card">
+            <div class="scene sky-fog">
+                <div class="fog-bank" style="top:20%;animation-duration:18s;animation-delay:0s"></div>
+                <div class="fog-bank" style="top:42%;height:90px;animation-duration:24s;animation-delay:-6s;opacity:.85"></div>
+                <div class="fog-bank" style="top:60%;height:80px;animation-duration:20s;animation-delay:-12s"></div>
+                <div class="fog-bank" style="top:78%;height:100px;animation-duration:28s;animation-delay:-3s;opacity:.9"></div>
+            </div>
+            <figcaption>
+                <span class="name"><span class="dot" style="color:#e2e6ee"></span>Fog</span>
+                <span class="cap">Layered banks of mist drifting at different rates.</span>
+            </figcaption>
+        </figure>
+
+    </main>
+
+    <footer>
+        <p>Pure CSS &mdash; no images, no JavaScript. Built by <a href="https://github.com/danielt69">Daniel
+                Tsionit</a>. <a href="https://github.com/danielt69/css-weather-scenes">Source on GitHub</a>.</p>
+    </footer>
+</body>
+
+</html>
