@@ -4,23 +4,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CSS Weather Scenes &mdash; Pure CSS, No Images, No JS</title>
+    <title>Live Weather Scenes &mdash; Real weather, animated in pure CSS</title>
     <meta name="description"
-        content="Six animated weather scenes — clear day, clear night, rain, snow, thunderstorm and fog — built with nothing but HTML and CSS. No images, no JavaScript, no libraries.">
+        content="A live, full-screen weather scene that reflects the real current weather at your location — clear day/night, clouds, rain, snow, thunderstorm and fog — animated with hand-built CSS. Geolocation + Open-Meteo, with a manual override.">
     <meta name="author" content="Daniel Tsionit">
     <meta name="color-scheme" content="dark">
-    <meta property="og:title" content="CSS Weather Scenes — Pure CSS">
+    <meta property="og:title" content="Live Weather Scenes">
     <meta property="og:description"
-        content="Six animated weather scenes built with nothing but HTML and CSS. No images, no JavaScript.">
+        content="A full-screen weather scene that reflects the real current weather at your location, animated in pure CSS. With manual override.">
     <meta property="og:type" content="website">
     <link rel="icon"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%85%3C/text%3E%3C/svg%3E">
     <style>
         :root {
-            --card-radius: 22px;
-            --gap: clamp(1rem, 2.4vw, 1.6rem);
-            --ink: #e9edf5;
-            --muted: #9aa3b5;
+            --ink: #f2f5fb;
+            --muted: rgba(255, 255, 255, 0.72);
+            --panel: rgba(8, 12, 22, 0.42);
+            --panel-border: rgba(255, 255, 255, 0.16);
+            --blur: 14px;
         }
 
         * {
@@ -29,173 +30,282 @@
             padding: 0;
         }
 
-        html {
-            -webkit-text-size-adjust: 100%;
+        html,
+        body {
+            height: 100%;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: var(--ink);
-            background:
-                radial-gradient(1200px 700px at 15% -10%, #1b2440 0%, transparent 55%),
-                radial-gradient(1100px 800px at 95% 110%, #241a38 0%, transparent 55%),
-                #0a0d16;
-            min-height: 100vh;
-            padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3.5rem) 4rem;
-            line-height: 1.5;
+            background: #0a0d16;
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ---------- Header ---------- */
-        header {
-            max-width: 1180px;
-            margin: 0 auto clamp(1.8rem, 4vw, 2.8rem);
-            text-align: center;
+        /* =================================================================
+           STAGE — full-screen weather
+        ================================================================= */
+        .stage {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            transition: background 0.8s ease;
         }
 
-        h1 {
-            font-size: clamp(1.9rem, 5.5vw, 3.2rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.05;
-            background: linear-gradient(180deg, #ffffff 0%, #aab6d8 130%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+        .scene-layer {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            animation: scene-in 0.6s ease both;
         }
 
-        .sub {
-            margin: 0.85rem auto 0;
-            max-width: 52ch;
-            color: var(--muted);
-            font-size: clamp(0.95rem, 2.4vw, 1.08rem);
-        }
+        @keyframes scene-in {
+            from {
+                opacity: 0;
+            }
 
-        .sub code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 0.9em;
-            color: #cdd5e8;
-            background: rgba(255, 255, 255, 0.07);
-            padding: 0.1em 0.45em;
-            border-radius: 6px;
-        }
-
-        /* ---------- Gallery grid ---------- */
-        .gallery {
-            max-width: 1180px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: var(--gap);
-        }
-
-        @media (max-width: 700px) {
-            .gallery {
-                grid-template-columns: 1fr;
+            to {
+                opacity: 1;
             }
         }
 
-        figure.card {
-            position: relative;
-            border-radius: var(--card-radius);
-            overflow: hidden;
-            background: #0e1320;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow:
-                0 1px 0 rgba(255, 255, 255, 0.05) inset,
-                0 18px 40px -18px rgba(0, 0, 0, 0.7);
-            transition: transform 0.4s cubic-bezier(.2, .7, .2, 1), box-shadow 0.4s;
+        /* ---------- glass UI ---------- */
+        .glass {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            -webkit-backdrop-filter: blur(var(--blur));
+            backdrop-filter: blur(var(--blur));
+            box-shadow: 0 14px 40px -18px rgba(0, 0, 0, 0.6);
         }
 
-        figure.card:hover {
-            transform: translateY(-4px);
-            box-shadow:
-                0 1px 0 rgba(255, 255, 255, 0.08) inset,
-                0 28px 55px -20px rgba(0, 0, 0, 0.8);
+        /* ---------- info card (top-left) ---------- */
+        .info {
+            position: fixed;
+            top: clamp(1rem, 3vw, 2rem);
+            left: clamp(1rem, 3vw, 2rem);
+            z-index: 10;
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
+            min-width: 220px;
+            max-width: min(86vw, 340px);
         }
 
-        .scene {
-            position: relative;
-            aspect-ratio: 16 / 11;
-            overflow: hidden;
-        }
-
-        figcaption {
-            padding: 0.95rem 1.15rem 1.1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.18rem;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        figcaption .name {
-            font-weight: 700;
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
+        .info .place {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        figcaption .name .dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            box-shadow: 0 0 10px currentColor;
-        }
-
-        figcaption .cap {
+            gap: 0.45rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
             color: var(--muted);
+        }
+
+        .info .place svg {
+            width: 14px;
+            height: 14px;
+            flex: none;
+            opacity: 0.9;
+        }
+
+        .info .temp {
+            font-size: clamp(2.4rem, 8vw, 3.4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.02;
+            margin-top: 0.2rem;
+        }
+
+        .info .temp .unit {
+            font-size: 0.42em;
+            font-weight: 600;
+            vertical-align: top;
+            color: var(--muted);
+            margin-left: 0.1em;
+        }
+
+        .info .cond {
+            font-size: 1.02rem;
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+
+        .info .meta {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .info .source {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.55rem;
+        }
+
+        .spinner {
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: -2px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ---------- override dock (bottom-center) ---------- */
+        .dock {
+            position: fixed;
+            left: 50%;
+            bottom: clamp(0.9rem, 3vw, 1.8rem);
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 0.4rem;
+            padding: 0.4rem;
+            border-radius: 999px;
+            max-width: 94vw;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .dock::-webkit-scrollbar {
+            display: none;
+        }
+
+        .pill {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--ink);
+            font: inherit;
             font-size: 0.86rem;
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 0.5rem 0.85rem;
+            border-radius: 999px;
+            cursor: pointer;
+            opacity: 0.78;
+            transition: background 0.2s, opacity 0.2s, transform 0.1s;
+        }
+
+        .pill:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .pill:active {
+            transform: scale(0.95);
+        }
+
+        .pill.active {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.92);
+            color: #10131c;
+        }
+
+        .pill .emoji {
+            margin-right: 0.35rem;
+        }
+
+        /* attribution (bottom-right) */
+        .credit {
+            position: fixed;
+            right: clamp(0.8rem, 3vw, 1.6rem);
+            bottom: clamp(0.8rem, 3vw, 1.6rem);
+            z-index: 10;
+            font-size: 0.74rem;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .credit a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .credit a:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .credit {
+                display: none;
+            }
+
+            .dock {
+                bottom: 0.7rem;
+            }
         }
 
         /* =================================================================
-           SCENE 1 — CLEAR DAY
+           SCENE BACKGROUNDS
         ================================================================= */
         .sky-day {
-            background: linear-gradient(180deg, #5fb6ff 0%, #aee0ff 55%, #ffe8b0 100%);
+            background: linear-gradient(180deg, #2f8fe6 0%, #6fc0ff 45%, #cfeaff 78%, #ffe7ad 100%);
         }
 
+        .sky-night {
+            background: linear-gradient(180deg, #050a1f 0%, #0f1c45 48%, #25295c 100%);
+        }
+
+        .sky-cloudy {
+            background: linear-gradient(180deg, #5b6883 0%, #7c889f 55%, #aab3c4 100%);
+        }
+
+        .sky-rain {
+            background: linear-gradient(180deg, #3a4458 0%, #56627a 55%, #79849a 100%);
+        }
+
+        .sky-snow {
+            background: linear-gradient(180deg, #61708f 0%, #8595b5 52%, #bdc9de 100%);
+        }
+
+        .sky-storm {
+            background: linear-gradient(180deg, #11151f 0%, #222a3b 55%, #313a4f 100%);
+        }
+
+        .sky-fog {
+            background: linear-gradient(180deg, #343b49 0%, #525a69 50%, #7b818d 100%);
+        }
+
+        /* ---------- SUN ---------- */
         .sun {
             position: absolute;
-            top: 26%;
+            top: 22%;
             left: 50%;
-            width: 86px;
-            height: 86px;
-            margin: -43px 0 0 -43px;
+            width: clamp(90px, 17vmin, 210px);
+            height: clamp(90px, 17vmin, 210px);
+            transform: translate(-50%, -50%);
             border-radius: 50%;
             background: radial-gradient(circle at 38% 34%, #fff7d6, #ffd54a 60%, #ffb01f 100%);
-            box-shadow: 0 0 40px 12px rgba(255, 199, 64, 0.65);
+            box-shadow: 0 0 90px 30px rgba(255, 199, 64, 0.6);
             animation: sun-pulse 5s ease-in-out infinite;
         }
 
         .sun::before {
-            /* rotating rays */
             content: "";
             position: absolute;
-            inset: -46px;
+            inset: clamp(-110px, -14vmin, -60px);
             border-radius: 50%;
-            background:
-                repeating-conic-gradient(from 0deg,
-                    rgba(255, 221, 120, 0.55) 0deg 6deg,
-                    transparent 6deg 22deg);
-            -webkit-mask: radial-gradient(circle, transparent 46px, #000 48px, #000 78px, transparent 80px);
-            mask: radial-gradient(circle, transparent 46px, #000 48px, #000 78px, transparent 80px);
-            animation: spin 24s linear infinite;
+            background: repeating-conic-gradient(from 0deg, rgba(255, 221, 120, 0.5) 0deg 5deg, transparent 5deg 20deg);
+            -webkit-mask: radial-gradient(circle, transparent 52%, #000 54%, #000 92%, transparent 94%);
+            mask: radial-gradient(circle, transparent 52%, #000 54%, #000 92%, transparent 94%);
+            animation: spin 26s linear infinite;
         }
 
         @keyframes sun-pulse {
 
             0%,
             100% {
-                transform: scale(1);
-                box-shadow: 0 0 40px 12px rgba(255, 199, 64, 0.6);
+                box-shadow: 0 0 90px 30px rgba(255, 199, 64, 0.55);
             }
 
             50% {
-                transform: scale(1.05);
-                box-shadow: 0 0 56px 18px rgba(255, 199, 64, 0.8);
+                box-shadow: 0 0 120px 44px rgba(255, 199, 64, 0.78);
             }
         }
 
@@ -205,34 +315,19 @@
             }
         }
 
-        /* a lazy drifting day cloud */
-        .day-cloud {
-            position: absolute;
-            bottom: 16%;
-            left: -30%;
-            animation: drift-r 26s linear infinite;
-        }
-
-        /* =================================================================
-           SCENE 2 — CLEAR NIGHT
-        ================================================================= */
-        .sky-night {
-            background: linear-gradient(180deg, #0a1230 0%, #142353 50%, #2a2f63 100%);
-        }
-
+        /* ---------- MOON + STARS ---------- */
         .moon {
             position: absolute;
-            top: 24%;
-            left: 64%;
-            width: 70px;
-            height: 70px;
+            top: 20%;
+            right: 16%;
+            width: clamp(70px, 13vmin, 150px);
+            height: clamp(70px, 13vmin, 150px);
             border-radius: 50%;
             background: radial-gradient(circle at 35% 32%, #fdfdf3, #d7d9e6 70%, #b9bdd2 100%);
-            box-shadow: 0 0 34px 6px rgba(220, 226, 255, 0.45);
+            box-shadow: 0 0 60px 14px rgba(220, 226, 255, 0.4);
             animation: moon-glow 7s ease-in-out infinite;
         }
 
-        /* crater shading via offset shadow ball */
         .moon::after {
             content: "";
             position: absolute;
@@ -242,24 +337,19 @@
             height: 92%;
             border-radius: 50%;
             background: radial-gradient(circle at 70% 60%, transparent 56%, #0a1230 60%);
-            opacity: 0.55;
+            opacity: 0.5;
         }
 
         @keyframes moon-glow {
 
             0%,
             100% {
-                box-shadow: 0 0 30px 5px rgba(220, 226, 255, 0.4);
+                box-shadow: 0 0 50px 12px rgba(220, 226, 255, 0.35);
             }
 
             50% {
-                box-shadow: 0 0 42px 9px rgba(220, 226, 255, 0.6);
+                box-shadow: 0 0 74px 20px rgba(220, 226, 255, 0.55);
             }
-        }
-
-        .stars {
-            position: absolute;
-            inset: 0;
         }
 
         .star {
@@ -282,36 +372,78 @@
 
             50% {
                 opacity: 1;
-                transform: scale(1.2);
+                transform: scale(1.25);
             }
         }
 
-        /* =================================================================
-           SCENE 3 — RAIN
-        ================================================================= */
-        .sky-rain {
-            background: linear-gradient(180deg, #4a5568 0%, #6b7689 55%, #8a93a6 100%);
-        }
-
-        .rain {
+        /* ---------- CLOUDS ---------- */
+        .cloud {
             position: absolute;
-            inset: 0;
-            overflow: hidden;
+            width: clamp(120px, 22vmin, 280px);
+            height: clamp(40px, 7vmin, 92px);
+            background: #f3f6fb;
+            border-radius: 999px;
+            opacity: 0.95;
         }
 
+        .cloud::before,
+        .cloud::after {
+            content: "";
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 48%;
+            height: 150%;
+            top: -64%;
+            left: 16%;
+        }
+
+        .cloud::after {
+            width: 34%;
+            height: 110%;
+            top: -42%;
+            left: 50%;
+        }
+
+        .cloud.dark {
+            background: #3e4659;
+        }
+
+        .cloud.grey {
+            background: #c4ccda;
+        }
+
+        @keyframes drift-r {
+            from {
+                transform: translateX(-30vw);
+            }
+
+            to {
+                transform: translateX(120vw);
+            }
+        }
+
+        /* ---------- RAIN ---------- */
         .drop {
             position: absolute;
-            top: -12%;
+            top: -8%;
             width: 2px;
-            height: 16px;
+            height: clamp(18px, 3vmin, 30px);
             border-radius: 2px;
             background: linear-gradient(transparent, rgba(200, 222, 255, 0.85));
             animation: fall linear infinite;
         }
 
+        .storm .drop {
+            background: linear-gradient(transparent, rgba(170, 190, 230, 0.7));
+        }
+
         @keyframes fall {
             0% {
-                transform: translateY(-20px);
+                transform: translateY(-10vh);
                 opacity: 0;
             }
 
@@ -320,37 +452,24 @@
             }
 
             100% {
-                transform: translateY(330px);
+                transform: translateY(110vh);
                 opacity: 0.9;
             }
         }
 
-        /* =================================================================
-           SCENE 4 — SNOW
-        ================================================================= */
-        .sky-snow {
-            background: linear-gradient(180deg, #6f7f9e 0%, #93a4c4 55%, #c2cee3 100%);
-        }
-
-        .snow {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-        }
-
+        /* ---------- SNOW ---------- */
         .flake {
             position: absolute;
-            top: -8%;
+            top: -6%;
             color: #fff;
-            font-size: 14px;
             line-height: 1;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
             animation: snow-fall linear infinite;
         }
 
         @keyframes snow-fall {
             0% {
-                transform: translate(0, -20px) rotate(0deg);
+                transform: translate(0, -8vh) rotate(0deg);
                 opacity: 0;
             }
 
@@ -359,39 +478,32 @@
             }
 
             100% {
-                transform: translate(var(--sway, 14px), 330px) rotate(360deg);
+                transform: translate(var(--sway, 30px), 108vh) rotate(360deg);
                 opacity: 0.9;
             }
         }
 
-        /* =================================================================
-           SCENE 5 — THUNDERSTORM
-        ================================================================= */
-        .sky-storm {
-            background: linear-gradient(180deg, #1c2130 0%, #2c3346 55%, #3a4256 100%);
-        }
-
+        /* ---------- STORM ---------- */
         .flash {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.95), rgba(180, 205, 255, 0.4) 40%, transparent 70%);
+            background: radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.95), rgba(180, 205, 255, 0.4) 38%, transparent 66%);
             opacity: 0;
             mix-blend-mode: screen;
             animation: lightning 6s linear infinite;
         }
 
-        /* the jagged bolt */
         .bolt {
             position: absolute;
-            top: 38%;
-            left: 46%;
+            top: 30%;
+            left: 48%;
             width: 0;
             height: 0;
             opacity: 0;
-            border-left: 7px solid transparent;
-            border-right: 11px solid transparent;
-            border-top: 46px solid #fff7c2;
-            filter: drop-shadow(0 0 8px #fff3a0);
+            border-left: clamp(10px, 1.4vmin, 16px) solid transparent;
+            border-right: clamp(16px, 2.2vmin, 24px) solid transparent;
+            border-top: clamp(70px, 11vmin, 130px) solid #fff7c2;
+            filter: drop-shadow(0 0 14px #fff3a0);
             transform: skewX(-8deg);
             animation: bolt-flash 6s linear infinite;
         }
@@ -399,11 +511,11 @@
         .bolt::after {
             content: "";
             position: absolute;
-            top: 40px;
-            left: -3px;
-            border-left: 5px solid transparent;
-            border-right: 7px solid transparent;
-            border-top: 30px solid #fff7c2;
+            top: clamp(68px, 10.8vmin, 128px);
+            left: -7px;
+            border-left: clamp(7px, 1vmin, 11px) solid transparent;
+            border-right: clamp(10px, 1.4vmin, 15px) solid transparent;
+            border-top: clamp(46px, 7vmin, 84px) solid #fff7c2;
             transform: skewX(10deg);
         }
 
@@ -453,291 +565,329 @@
             }
         }
 
-        .storm-rain .drop {
-            background: linear-gradient(transparent, rgba(170, 190, 230, 0.7));
-        }
-
-        /* =================================================================
-           SCENE 6 — FOG
-        ================================================================= */
-        .sky-fog {
-            background: linear-gradient(180deg, #3a4150 0%, #555c6b 50%, #757b88 100%);
-        }
-
+        /* ---------- FOG ---------- */
         .fog-bank {
             position: absolute;
             left: -60%;
             width: 220%;
-            height: 70px;
+            height: clamp(80px, 16vmin, 200px);
             border-radius: 50%;
-            background: radial-gradient(closest-side, rgba(226, 230, 238, 0.55), rgba(226, 230, 238, 0) 72%);
-            filter: blur(4px);
+            background: radial-gradient(closest-side, rgba(226, 230, 238, 0.5), rgba(226, 230, 238, 0) 72%);
+            filter: blur(6px);
             animation: fog-drift linear infinite;
         }
 
         @keyframes fog-drift {
-            0% {
+
+            0%,
+            100% {
                 transform: translateX(0);
             }
 
             50% {
-                transform: translateX(14%);
-            }
-
-            100% {
-                transform: translateX(0);
+                transform: translateX(12%);
             }
         }
 
         /* =================================================================
-           SHARED — CLOUDS
-        ================================================================= */
-        .cloud {
-            position: absolute;
-            width: 110px;
-            height: 36px;
-            background: #f3f6fb;
-            border-radius: 40px;
-            opacity: 0.95;
-        }
-
-        .cloud::before,
-        .cloud::after {
-            content: "";
-            position: absolute;
-            background: inherit;
-            border-radius: 50%;
-        }
-
-        .cloud::before {
-            width: 52px;
-            height: 52px;
-            top: -24px;
-            left: 18px;
-        }
-
-        .cloud::after {
-            width: 38px;
-            height: 38px;
-            top: -16px;
-            left: 56px;
-        }
-
-        .cloud.dark {
-            background: #4b5468;
-            opacity: 0.96;
-        }
-
-        .cloud.grey {
-            background: #c4ccda;
-        }
-
-        .drift-slow {
-            animation: drift-r 30s linear infinite;
-        }
-
-        .drift-mid {
-            animation: drift-r 22s linear infinite;
-        }
-
-        @keyframes drift-r {
-            from {
-                transform: translateX(-40px);
-            }
-
-            to {
-                transform: translateX(420px);
-            }
-        }
-
-        /* ---------- Footer ---------- */
-        footer {
-            max-width: 1180px;
-            margin: clamp(2.4rem, 6vw, 4rem) auto 0;
-            text-align: center;
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-
-        footer a {
-            color: #b9c4e0;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(185, 196, 224, 0.35);
-        }
-
-        footer a:hover {
-            color: #fff;
-        }
-
-        /* =================================================================
-           REDUCED MOTION — freeze everything
+           REDUCED MOTION
         ================================================================= */
         @media (prefers-reduced-motion: reduce) {
-            * {
+
+            *,
+            .scene-layer {
                 animation: none !important;
                 transition: none !important;
             }
 
-            /* keep elements in a pleasant resting state */
             .drop,
             .flake {
                 opacity: 0.7;
             }
+        }
 
-            .day-cloud,
-            .cloud {
-                transform: none;
-            }
+        /* fade for scene swaps */
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.35s ease;
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>CSS Weather Scenes</h1>
-        <p class="sub">Six animated weather scenes built with nothing but HTML and CSS &mdash; no images, no
-            JavaScript, no libraries. Every drop, ray and flash is a <code>@keyframes</code>.</p>
-    </header>
+    <div class="stage" id="stage" aria-live="polite">
+        <div class="scene-layer" id="scene"></div>
+    </div>
 
-    <main class="gallery">
+    <section class="info glass" id="info" aria-label="Current weather">
+        <div class="place" id="place">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span id="place-name"><span class="spinner"></span> Locating&hellip;</span>
+        </div>
+        <div class="temp" id="temp">&mdash;<span class="unit">&deg;C</span></div>
+        <div class="cond" id="cond">Reading the sky&hellip;</div>
+        <div class="meta" id="meta"></div>
+        <div class="source" id="source">Weather by Open-Meteo</div>
+    </section>
 
-        <!-- 1. CLEAR DAY -->
-        <figure class="card">
-            <div class="scene sky-day">
-                <div class="sun"></div>
-                <div class="cloud grey day-cloud"></div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#ffc740"></span>Clear Day</span>
-                <span class="cap">Warm sky, pulsing sun with slowly rotating rays.</span>
-            </figcaption>
-        </figure>
+    <nav class="dock glass" id="dock" aria-label="Override weather scene"></nav>
 
-        <!-- 2. CLEAR NIGHT -->
-        <figure class="card">
-            <div class="scene sky-night">
-                <div class="stars">
-                    <span class="star" style="top:18%;left:12%;animation-delay:0s"></span>
-                    <span class="star" style="top:30%;left:28%;animation-delay:1.1s"></span>
-                    <span class="star" style="top:12%;left:44%;animation-delay:.4s"></span>
-                    <span class="star" style="top:46%;left:20%;animation-delay:1.8s"></span>
-                    <span class="star" style="top:22%;left:80%;animation-delay:.7s"></span>
-                    <span class="star" style="top:56%;left:38%;animation-delay:2.3s"></span>
-                    <span class="star" style="top:64%;left:72%;animation-delay:1.4s"></span>
-                    <span class="star" style="top:38%;left:90%;animation-delay:.2s"></span>
-                    <span class="star" style="top:72%;left:14%;animation-delay:2.0s"></span>
-                    <span class="star" style="top:8%;left:62%;animation-delay:1.6s"></span>
-                    <span class="star" style="top:50%;left:54%;animation-delay:.9s"></span>
-                    <span class="star" style="top:80%;left:48%;animation-delay:2.6s"></span>
-                </div>
-                <div class="moon"></div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#dce2ff"></span>Clear Night</span>
-                <span class="cap">Glowing moon over a field of twinkling stars.</span>
-            </figcaption>
-        </figure>
+    <p class="credit">Built by <a href="https://github.com/danielt69">Daniel Tsionit</a> &middot;
+        <a href="https://github.com/danielt69/css-weather-scenes">source</a>
+    </p>
 
-        <!-- 3. RAIN -->
-        <figure class="card">
-            <div class="scene sky-rain">
-                <div class="cloud grey drift-slow" style="top:14%;left:8%"></div>
-                <div class="cloud drift-mid" style="top:26%;left:46%;transform:scale(.85)"></div>
-                <div class="rain">
-                    <span class="drop" style="left:8%;animation-duration:.7s;animation-delay:0s"></span>
-                    <span class="drop" style="left:16%;animation-duration:.85s;animation-delay:.3s"></span>
-                    <span class="drop" style="left:24%;animation-duration:.6s;animation-delay:.15s"></span>
-                    <span class="drop" style="left:33%;animation-duration:.9s;animation-delay:.5s"></span>
-                    <span class="drop" style="left:41%;animation-duration:.7s;animation-delay:.2s"></span>
-                    <span class="drop" style="left:50%;animation-duration:.8s;animation-delay:.45s"></span>
-                    <span class="drop" style="left:58%;animation-duration:.65s;animation-delay:.1s"></span>
-                    <span class="drop" style="left:67%;animation-duration:.9s;animation-delay:.35s"></span>
-                    <span class="drop" style="left:75%;animation-duration:.7s;animation-delay:.55s"></span>
-                    <span class="drop" style="left:84%;animation-duration:.8s;animation-delay:.25s"></span>
-                    <span class="drop" style="left:92%;animation-duration:.6s;animation-delay:.4s"></span>
-                    <span class="drop" style="left:12%;animation-duration:.95s;animation-delay:.6s"></span>
-                    <span class="drop" style="left:38%;animation-duration:.75s;animation-delay:.7s"></span>
-                    <span class="drop" style="left:62%;animation-duration:.85s;animation-delay:.65s"></span>
-                    <span class="drop" style="left:88%;animation-duration:.7s;animation-delay:.5s"></span>
-                </div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#c8deff"></span>Rain</span>
-                <span class="cap">Drifting clouds and staggered falling streaks.</span>
-            </figcaption>
-        </figure>
+    <script>
+        "use strict";
 
-        <!-- 4. SNOW -->
-        <figure class="card">
-            <div class="scene sky-snow">
-                <div class="cloud drift-slow" style="top:14%;left:10%"></div>
-                <div class="snow">
-                    <span class="flake" style="left:6%;font-size:12px;animation-duration:6s;animation-delay:0s;--sway:18px">&#10052;</span>
-                    <span class="flake" style="left:15%;font-size:16px;animation-duration:8s;animation-delay:1.5s;--sway:-12px">&#10052;</span>
-                    <span class="flake" style="left:24%;font-size:10px;animation-duration:5s;animation-delay:.7s;--sway:22px">&#10052;</span>
-                    <span class="flake" style="left:33%;font-size:14px;animation-duration:7s;animation-delay:2.2s;--sway:-16px">&#10052;</span>
-                    <span class="flake" style="left:42%;font-size:11px;animation-duration:6.5s;animation-delay:.4s;--sway:14px">&#10052;</span>
-                    <span class="flake" style="left:51%;font-size:18px;animation-duration:9s;animation-delay:1.1s;--sway:-20px">&#10052;</span>
-                    <span class="flake" style="left:60%;font-size:12px;animation-duration:5.5s;animation-delay:2.8s;--sway:16px">&#10052;</span>
-                    <span class="flake" style="left:69%;font-size:15px;animation-duration:7.5s;animation-delay:.9s;--sway:-14px">&#10052;</span>
-                    <span class="flake" style="left:78%;font-size:10px;animation-duration:6s;animation-delay:1.9s;--sway:20px">&#10052;</span>
-                    <span class="flake" style="left:87%;font-size:14px;animation-duration:8.5s;animation-delay:.3s;--sway:-18px">&#10052;</span>
-                    <span class="flake" style="left:94%;font-size:12px;animation-duration:6.8s;animation-delay:2.5s;--sway:12px">&#10052;</span>
-                    <span class="flake" style="left:38%;font-size:13px;animation-duration:7.2s;animation-delay:3.4s;--sway:-22px">&#10052;</span>
-                </div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#ffffff"></span>Snow</span>
-                <span class="cap">Snowflakes drifting and tumbling at varied speeds.</span>
-            </figcaption>
-        </figure>
+        var reduceMotion = window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        <!-- 5. THUNDERSTORM -->
-        <figure class="card">
-            <div class="scene sky-storm">
-                <div class="flash"></div>
-                <div class="cloud dark drift-slow" style="top:10%;left:6%"></div>
-                <div class="cloud dark drift-mid" style="top:20%;left:48%;transform:scale(.9)"></div>
-                <div class="bolt"></div>
-                <div class="rain storm-rain">
-                    <span class="drop" style="left:14%;animation-duration:.6s;animation-delay:.1s"></span>
-                    <span class="drop" style="left:28%;animation-duration:.75s;animation-delay:.4s"></span>
-                    <span class="drop" style="left:40%;animation-duration:.55s;animation-delay:.2s"></span>
-                    <span class="drop" style="left:55%;animation-duration:.8s;animation-delay:.5s"></span>
-                    <span class="drop" style="left:68%;animation-duration:.6s;animation-delay:.15s"></span>
-                    <span class="drop" style="left:80%;animation-duration:.7s;animation-delay:.35s"></span>
-                    <span class="drop" style="left:90%;animation-duration:.65s;animation-delay:.55s"></span>
-                    <span class="drop" style="left:20%;animation-duration:.85s;animation-delay:.65s"></span>
-                    <span class="drop" style="left:48%;animation-duration:.6s;animation-delay:.3s"></span>
-                    <span class="drop" style="left:74%;animation-duration:.75s;animation-delay:.45s"></span>
-                </div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#fff3a0"></span>Thunderstorm</span>
-                <span class="cap">Dark clouds, driving rain and a periodic lightning bolt.</span>
-            </figcaption>
-        </figure>
+        function rnd(min, max) { return Math.random() * (max - min) + min; }
 
-        <!-- 6. FOG -->
-        <figure class="card">
-            <div class="scene sky-fog">
-                <div class="fog-bank" style="top:20%;animation-duration:18s;animation-delay:0s"></div>
-                <div class="fog-bank" style="top:42%;height:90px;animation-duration:24s;animation-delay:-6s;opacity:.85"></div>
-                <div class="fog-bank" style="top:60%;height:80px;animation-duration:20s;animation-delay:-12s"></div>
-                <div class="fog-bank" style="top:78%;height:100px;animation-duration:28s;animation-delay:-3s;opacity:.9"></div>
-            </div>
-            <figcaption>
-                <span class="name"><span class="dot" style="color:#e2e6ee"></span>Fog</span>
-                <span class="cap">Layered banks of mist drifting at different rates.</span>
-            </figcaption>
-        </figure>
+        // ---- scene element builders (full-screen) -------------------------
+        function buildDay() {
+            var h = '<div class="sun"></div>';
+            h += '<div class="cloud grey" style="top:64%;left:8%;animation:drift-r 46s linear infinite"></div>';
+            h += '<div class="cloud" style="top:30%;left:40%;transform:scale(.8);animation:drift-r 60s linear infinite;animation-delay:-20s"></div>';
+            return h;
+        }
+        function buildNight() {
+            var h = '<div class="moon"></div>';
+            var n = reduceMotion ? 26 : 70;
+            for (var i = 0; i < n; i++) {
+                h += '<span class="star" style="top:' + rnd(2, 88).toFixed(1) + '%;left:' +
+                    rnd(1, 99).toFixed(1) + '%;animation-delay:' + rnd(0, 3).toFixed(2) +
+                    's;width:' + rnd(2, 3.4).toFixed(1) + 'px;height:' + rnd(2, 3.4).toFixed(1) + 'px"></span>';
+            }
+            return h;
+        }
+        function buildCloudy() {
+            var h = '';
+            var defs = [[12, 0.55, 52], [38, 0.9, 64], [60, 0.7, 58], [22, 1.05, 70], [70, 0.8, 48]];
+            for (var i = 0; i < defs.length; i++) {
+                h += '<div class="cloud grey" style="top:' + defs[i][0] + '%;transform:scale(' +
+                    defs[i][1] + ');animation:drift-r ' + defs[i][2] + 's linear infinite;animation-delay:-' +
+                    (i * 9) + 's"></div>';
+            }
+            return h;
+        }
+        function buildRain(storm) {
+            var h = '';
+            var cloudCls = storm ? 'cloud dark' : 'cloud grey';
+            h += '<div class="' + cloudCls + '" style="top:8%;left:6%;transform:scale(1.1);animation:drift-r 70s linear infinite"></div>';
+            h += '<div class="' + cloudCls + '" style="top:16%;left:48%;transform:scale(.95);animation:drift-r 84s linear infinite;animation-delay:-30s"></div>';
+            var n = reduceMotion ? 24 : (storm ? 70 : 90);
+            for (var i = 0; i < n; i++) {
+                h += '<span class="drop" style="left:' + rnd(0, 100).toFixed(1) +
+                    '%;animation-duration:' + rnd(0.45, 0.95).toFixed(2) +
+                    's;animation-delay:' + rnd(0, 1.2).toFixed(2) + 's"></span>';
+            }
+            return h;
+        }
+        function buildSnow() {
+            var h = '<div class="cloud" style="top:10%;left:14%;transform:scale(1);animation:drift-r 80s linear infinite"></div>';
+            var n = reduceMotion ? 22 : 60;
+            for (var i = 0; i < n; i++) {
+                h += '<span class="flake" style="left:' + rnd(0, 100).toFixed(1) +
+                    '%;font-size:' + rnd(10, 22).toFixed(0) + 'px;animation-duration:' +
+                    rnd(5, 11).toFixed(1) + 's;animation-delay:' + rnd(0, 5).toFixed(2) +
+                    's;--sway:' + rnd(-50, 50).toFixed(0) + 'px">❄</span>';
+            }
+            return h;
+        }
+        function buildStorm() {
+            var h = '<div class="flash"></div>';
+            h += buildRain(true);
+            h += '<div class="bolt"></div>';
+            return h;
+        }
+        function buildFog() {
+            var h = '';
+            var defs = [[18, 0], [40, -6], [60, -12], [80, -3], [30, -16]];
+            for (var i = 0; i < defs.length; i++) {
+                h += '<div class="fog-bank" style="top:' + defs[i][0] +
+                    '%;animation-duration:' + (16 + i * 4) + 's;animation-delay:' + defs[i][1] + 's"></div>';
+            }
+            return h;
+        }
 
-    </main>
+        var SCENES = {
+            day: { label: "Clear Day", emoji: "☀️", sky: "sky-day", build: buildDay },
+            night: { label: "Clear Night", emoji: "🌙", sky: "sky-night", build: buildNight },
+            cloudy: { label: "Cloudy", emoji: "☁️", sky: "sky-cloudy", build: buildCloudy },
+            rain: { label: "Rain", emoji: "🌧️", sky: "sky-rain", build: function () { return buildRain(false); } },
+            snow: { label: "Snow", emoji: "❄️", sky: "sky-snow", build: buildSnow },
+            storm: { label: "Storm", emoji: "⛈️", sky: "sky-storm", build: buildStorm },
+            fog: { label: "Fog", emoji: "🌫️", sky: "sky-fog", build: buildFog }
+        };
+        var ORDER = ["day", "night", "cloudy", "rain", "snow", "storm", "fog"];
 
-    <footer>
-        <p>Pure CSS &mdash; no images, no JavaScript. Built by <a href="https://github.com/danielt69">Daniel
-                Tsionit</a>. <a href="https://github.com/danielt69/css-weather-scenes">Source on GitHub</a>.</p>
-    </footer>
+        // WMO weather code -> condition text
+        var WMO = {
+            0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+            45: "Fog", 48: "Depositing rime fog",
+            51: "Light drizzle", 53: "Drizzle", 55: "Dense drizzle",
+            56: "Freezing drizzle", 57: "Freezing drizzle",
+            61: "Slight rain", 63: "Rain", 65: "Heavy rain",
+            66: "Freezing rain", 67: "Freezing rain",
+            71: "Slight snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains",
+            80: "Rain showers", 81: "Rain showers", 82: "Violent rain showers",
+            85: "Snow showers", 86: "Snow showers",
+            95: "Thunderstorm", 96: "Thunderstorm w/ hail", 99: "Thunderstorm w/ hail"
+        };
+
+        function codeToScene(code, isDay) {
+            if (code === 0) return isDay ? "day" : "night";
+            if (code === 1 || code === 2) return isDay ? "day" : "night";
+            if (code === 3) return "cloudy";
+            if (code === 45 || code === 48) return "fog";
+            if (code >= 95) return "storm";
+            if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
+            if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
+            return isDay ? "day" : "night";
+        }
+
+        // ---- render -------------------------------------------------------
+        var stageEl = document.getElementById("stage");
+        var sceneEl = document.getElementById("scene");
+        var dockEl = document.getElementById("dock");
+        var current = null;
+        var autoScene = null; // scene chosen from real weather
+
+        function render(key) {
+            if (!SCENES[key]) return;
+            current = key;
+            stageEl.className = "stage " + SCENES[key].sky;
+            var layer = document.createElement("div");
+            layer.className = "scene-layer " + (key === "storm" ? "storm" : "");
+            layer.innerHTML = SCENES[key].build();
+            sceneEl.parentNode.replaceChild(layer, sceneEl);
+            sceneEl = layer;
+            sceneEl.id = "scene";
+            // sync dock active state
+            var pills = dockEl.querySelectorAll(".pill");
+            for (var i = 0; i < pills.length; i++) {
+                var pk = pills[i].getAttribute("data-key");
+                pills[i].classList.toggle("active",
+                    (pk === "auto" && key === autoScene && isAuto) || (pk === key && !isAuto));
+            }
+        }
+
+        var isAuto = true;
+        function setManual(key) {
+            isAuto = false;
+            render(key);
+        }
+        function setAuto() {
+            isAuto = true;
+            if (autoScene) render(autoScene);
+        }
+
+        // build dock: Auto + each scene
+        (function buildDock() {
+            var btn = document.createElement("button");
+            btn.className = "pill active";
+            btn.setAttribute("data-key", "auto");
+            btn.innerHTML = '<span class="emoji">📍</span>Auto';
+            btn.onclick = setAuto;
+            dockEl.appendChild(btn);
+            ORDER.forEach(function (k) {
+                var b = document.createElement("button");
+                b.className = "pill";
+                b.setAttribute("data-key", k);
+                b.innerHTML = '<span class="emoji">' + SCENES[k].emoji + '</span>' + SCENES[k].label;
+                b.onclick = function () { setManual(k); };
+                dockEl.appendChild(b);
+            });
+        })();
+
+        // ---- info panel ---------------------------------------------------
+        function setInfo(o) {
+            document.getElementById("place-name").textContent = o.place || "Unknown location";
+            document.getElementById("temp").innerHTML = (o.temp != null
+                ? Math.round(o.temp) : "&mdash;") + '<span class="unit">&deg;C</span>';
+            document.getElementById("cond").textContent = o.cond || "";
+            var meta = [];
+            if (o.wind != null) meta.push("💨 " + Math.round(o.wind) + " km/h");
+            if (o.feels != null) meta.push("Feels " + Math.round(o.feels) + "°");
+            document.getElementById("meta").textContent = meta.join("   ");
+            document.getElementById("source").textContent = o.note || "Weather by Open-Meteo";
+        }
+
+        // ---- data flow ----------------------------------------------------
+        function fetchWeather(lat, lon) {
+            var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat +
+                "&longitude=" + lon +
+                "&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m";
+            return fetch(url).then(function (r) {
+                if (!r.ok) throw new Error("weather " + r.status);
+                return r.json();
+            });
+        }
+
+        function fetchPlace(lat, lon) {
+            var url = "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" +
+                lat + "&longitude=" + lon + "&localityLanguage=en";
+            return fetch(url).then(function (r) {
+                return r.ok ? r.json() : null;
+            }).catch(function () { return null; });
+        }
+
+        function applyWeather(w, placeName) {
+            var c = w && w.current;
+            if (!c) { fallback("Weather unavailable"); return; }
+            var isDay = c.is_day === 1 || c.is_day === true;
+            autoScene = codeToScene(c.weather_code, isDay);
+            setInfo({
+                place: placeName || "Your location",
+                temp: c.temperature_2m,
+                feels: c.apparent_temperature,
+                wind: c.wind_speed_10m,
+                cond: WMO[c.weather_code] || "Weather",
+                note: "Live · Open-Meteo"
+            });
+            if (isAuto) render(autoScene);
+        }
+
+        function fallback(reason) {
+            // pick day/night by local hour so it still looks intentional
+            var hr = new Date().getHours();
+            autoScene = (hr >= 6 && hr < 19) ? "day" : "night";
+            setInfo({
+                place: reason || "Location unavailable",
+                temp: null,
+                cond: "Pick a scene below ↓",
+                note: "Enable location for live weather"
+            });
+            if (isAuto) render(autoScene);
+        }
+
+        function start() {
+            if (!navigator.geolocation) { fallback("Geolocation not supported"); return; }
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var lat = pos.coords.latitude.toFixed(4);
+                var lon = pos.coords.longitude.toFixed(4);
+                Promise.all([fetchWeather(lat, lon), fetchPlace(lat, lon)])
+                    .then(function (res) {
+                        var place = null;
+                        if (res[1]) place = res[1].city || res[1].locality ||
+                            res[1].principalSubdivision || res[1].countryName;
+                        applyWeather(res[0], place);
+                    })
+                    .catch(function () { fallback("Couldn't load weather"); });
+            }, function (err) {
+                fallback(err && err.code === 1 ? "Location permission denied" : "Location unavailable");
+            }, { timeout: 9000, maximumAge: 600000 });
+        }
+
+        // initial paint: a neutral scene while we wait
+        render((new Date().getHours() >= 6 && new Date().getHours() < 19) ? "day" : "night");
+        start();
+    </script>
 </body>
 
 </html>
