@@ -1,26 +1,32 @@
-# Live Weather Scenes
+# CSS Weather Scenes
 
-A full-screen weather scene that reflects the **real current weather at your location** — and animates it with hand-built CSS. Clear day, clear night, cloudy, rain, snow, thunderstorm and fog, each composed from gradients and `@keyframes` (no images, no canvas, no libraries).
+Six animated weather scenes built with **pure HTML and CSS** — no JavaScript, no images, no external resources of any kind.
 
-**[Live demo →](https://danielt69.github.io/css-weather-scenes/)**
+**Live demo:** https://danielt69.github.io/css-weather-scenes/
 
-## What it does
+## The scenes
 
-- Asks for your location (browser geolocation), looks up the **live current conditions**, and renders the matching scene full-screen — with temperature, "feels like", wind and the place name.
-- **Manual override:** a dock of scene pills lets you switch to any weather on demand; tap **Auto (📍)** to snap back to your real, live weather.
-- **Graceful fallback:** if location is denied or offline, it picks a day/night scene by your local time and invites you to choose a scene manually — nothing breaks.
-- Honors `prefers-reduced-motion` (freezes animation and thins out particles), and reflows cleanly down to mobile.
+| Scene | Animation technique |
+|-------|--------------------|
+| Clear Day | Radial-gradient sun with a ring of `<span>` rays rotating via `@keyframes rotate` (full 360° loop) |
+| Clear Night | Radial-gradient moon with an inset crescent shadow; stars pulse opacity + scale via staggered `@keyframes twinkle` |
+| Rain | Gradient-streak raindrops falling with `@keyframes fall-rain` (translateY), under a `border-radius` cloud that sways with `@keyframes cloud-drift` |
+| Snow | Circular flakes of varied sizes drifting down via `@keyframes fall-snow` (combined translateX + translateY for a natural sway), each with its own duration/delay |
+| Thunderstorm | Dark cloud over a periodic radial-gradient `@keyframes flash` plus a `clip-path` lightning bolt that strikes in sync (`@keyframes bolt-strike`) |
+| Fog | Four blurred translucent layers sliding horizontally via `@keyframes drift`, alternating direction for depth |
 
 ## How it works
 
-- **Weather:** [Open-Meteo](https://open-meteo.com/) current-conditions API — free, no API key. WMO weather codes are mapped to scenes (`day`/`night` for clear, `cloudy` for overcast, plus `rain`, `snow`, `storm`, `fog`).
-- **Place name:** [BigDataCloud](https://www.bigdatacloud.com/) client-side reverse geocoding — also keyless.
-- **Scenes:** every drop, ray, star and lightning bolt is a CSS animation. A small vanilla-JS layer generates the particles at full-screen scale, swaps scenes, and wires the override dock. Single self-contained `index.html` — no build step.
+Every scene is a fixed-size card. The weather elements are plain `<div>` and `<span>`
+elements styled entirely with CSS — gradients for skies and the sun/moon, `border-radius`
+for clouds and flakes, and `clip-path` for the lightning bolt. All motion comes from CSS
+`@keyframes` animations; there is not a single line of script.
+
+- **Layout:** responsive CSS Grid (`repeat(auto-fill, minmax(260px, 1fr))`) that reflows to a single column at 390px.
+- **No images:** suns, moons, clouds, rain, snow, and bolts are all CSS shapes.
+- **No JS:** open the page source — zero `<script>` tags.
+- **Accessible:** respects `prefers-reduced-motion`, pausing all animations for users who opt out.
 
 ## Run locally
 
-Open `index.html` in a browser (geolocation needs `https://` or `localhost` to work).
-
----
-
-Built by [Daniel Tsionit](https://github.com/danielt69).
+Just open `index.html` in any browser. No build step, no dependencies.
