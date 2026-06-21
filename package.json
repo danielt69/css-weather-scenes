@@ -1,0 +1,18 @@
+{
+  "name": "css-weather-scenes",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "WebGL full-screen weather visualizer (Three.js + Vite) driven by geolocation + Open-Meteo.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
