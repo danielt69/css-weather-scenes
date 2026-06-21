@@ -23,14 +23,28 @@
       <p class="noscript">This visualizer needs JavaScript and WebGL enabled.</p>
     </noscript>
 
-    <!-- HUD: location + condition readout -->
+    <!-- HUD: live current-conditions readout (top-left) -->
     <div class="readout" id="readout" aria-live="polite">
+      <div class="readout__top">
+        <span class="readout__icon" id="r-icon">🌡️</span>
+        <span class="readout__temp" id="r-temp"></span>
+        <span class="readout__live" id="r-live"><span class="readout__dot"></span>LIVE</span>
+      </div>
       <div class="readout__condition" id="r-condition">Loading…</div>
       <div class="readout__meta">
         <span id="r-place">Locating…</span>
-        <span class="readout__temp" id="r-temp"></span>
+        <span class="readout__feels" id="r-feels"></span>
       </div>
     </div>
+
+    <!-- 7-day forecast — centered glass widget -->
+    <section class="forecast" id="forecast" aria-label="7-day forecast" hidden>
+      <div class="forecast__head">
+        <span class="forecast__title">7-Day Forecast</span>
+        <span class="forecast__place" id="f-place"></span>
+      </div>
+      <div class="forecast__row" id="forecast-row"></div>
+    </section>
 
     <!-- Manual override dock -->
     <nav class="dock" id="dock" aria-label="Choose a weather scene">

@@ -212,19 +212,56 @@ export class RainGround {
         varying vec2 vUv;
         uniform float uTime, uOpacity; uniform vec3 uColor;
         float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3,289.1)))*43758.5453); }
+
+        // One raindrop impact in a cell: a bright contact flash, then an
+        // expanding ripple ring with a sharp leading rim that thins + fades as
+        // it spreads — reads as a real splash, not a static dot.
+        float splash(vec2 f, float ph, float maxR){
+          float d = length(f);
+          float fade = 1.0 - ph;                 // whole event dies out over its life
+          float rad  = ph * maxR;                // ring grows outward
+          float thick = mix(0.012, 0.05, ph);    // ring widens as it expands
+          // ring body + a brighter, tighter leading rim
+          float ring = smoothstep(thick, 0.0, abs(d - rad));
+          float rim  = smoothstep(thick * 0.45, 0.0, abs(d - rad));
+          // contact flash: tiny bright droplet burst at the very start
+          float flash = smoothstep(0.05, 0.0, d) * smoothstep(0.16, 0.0, ph);
+          return (ring * 0.85 + rim * 0.9 + flash * 1.6) * fade * fade;
+        }
+
         void main(){
-          vec2 g = vUv * 26.0;          // splash grid
+          // perspective-ish: bigger, sparser splashes up close (high vUv.y),
+          // finer ones toward the horizon.
+          float near = smoothstep(0.0, 0.6, vUv.y);
+          float dens = mix(28.0, 16.0, near);
+          vec2 g = vUv * dens;
           vec2 cell = floor(g);
           vec2 f = fract(g) - 0.5;
+
           float rnd = hash(cell);
-          // each cell pulses on its own phase
-          float period = 1.1 + rnd;
-          float ph = fract((uTime + rnd * 7.0) / period);
-          float ring = smoothstep(0.02, 0.0, abs(length(f) - ph * 0.5)) * (1.0 - ph);
+          float rnd2 = hash(cell + 17.0);
+
+          float maxR = mix(0.30, 0.46, near);
+
+          // primary drop on its own period + phase
+          float period = 0.9 + rnd * 0.9;
+          float ph = fract((uTime + rnd * 9.0) / period);
+          float s = splash(f, ph, maxR);
+
+          // secondary drop, offset within the cell + out of phase, so impacts
+          // feel scattered and continuous rather than a synced grid.
+          vec2 f2 = f - (vec2(rnd, rnd2) - 0.5) * 0.5;
+          float period2 = 0.8 + rnd2 * 1.0;
+          float ph2 = fract((uTime + rnd2 * 13.0) / period2);
+          s += splash(f2, ph2, maxR * 0.8) * 0.8;
+
+          // faint static wet sheen so the plane reads as a slick surface.
+          float sheen = 0.05 * smoothstep(0.0, 0.5, vUv.y) * (0.6 + 0.4 * rnd);
+
           // distance fade so the far plane melts into fog/horizon
-          float depth = smoothstep(0.0, 0.35, vUv.y);
-          float a = ring * depth * uOpacity;
-          gl_FragColor = vec4(uColor, a);
+          float depth = smoothstep(0.0, 0.32, vUv.y);
+          float a = (s + sheen) * depth * uOpacity;
+          gl_FragColor = vec4(uColor, clamp(a, 0.0, 1.0));
         }
       `,
     });
