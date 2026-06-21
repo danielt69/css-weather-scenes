@@ -1,6 +1,7 @@
 import { SCENES, SCENE_META } from './weather.js';
 
-// Builds the bottom dock (scene picker + Live toggle) and the top-left readout.
+// Builds the bottom dock (scene picker + Live toggle), the top-left live
+// readout, and the centered 7-day forecast widget.
 export class UI {
   constructor({ onPick, onAuto }) {
     this.onPick = onPick;
@@ -38,6 +39,14 @@ export class UI {
     this.rCond = document.getElementById('r-condition');
     this.rPlace = document.getElementById('r-place');
     this.rTemp = document.getElementById('r-temp');
+    this.rIcon = document.getElementById('r-icon');
+    this.rFeels = document.getElementById('r-feels');
+    this.rLive = document.getElementById('r-live');
+
+    // forecast refs
+    this.forecast = document.getElementById('forecast');
+    this.forecastRow = document.getElementById('forecast-row');
+    this.fPlace = document.getElementById('f-place');
   }
 
   setCollapsed(c) {
@@ -48,11 +57,40 @@ export class UI {
   setActive(key, isAuto) {
     for (const [k, b] of this.buttons) b.classList.toggle('is-active', k === key);
     this.autoBtn.classList.toggle('is-live', !!isAuto);
+    // the LIVE chip only makes sense in auto mode.
+    if (this.rLive) this.rLive.classList.toggle('is-on', !!isAuto);
   }
 
-  setReadout({ condition, place, temp }) {
+  setReadout({ condition, place, temp, feels, icon }) {
     if (condition != null) this.rCond.textContent = condition;
     if (place != null) this.rPlace.textContent = place;
-    this.rTemp.textContent = temp == null ? '' : `${temp}°`;
+    if (icon !== undefined) this.rIcon.textContent = icon || '';
+    this.rTemp.textContent = temp == null ? '—' : `${temp}°`;
+    if (feels !== undefined) {
+      this.rFeels.textContent = feels == null ? '' : `Feels ${feels}°`;
+    }
+  }
+
+  // Render the 7-day forecast columns. Empty/missing data hides the widget.
+  setForecast(daily, place) {
+    if (!daily || !daily.length) {
+      this.forecast.hidden = true;
+      return;
+    }
+    if (place != null) this.fPlace.textContent = place;
+    this.forecastRow.innerHTML = daily
+      .map((d, i) => {
+        const today = i === 0 ? ' is-today' : '';
+        const day = i === 0 ? 'Today' : d.label;
+        return `
+          <div class="fday${today}">
+            <span class="fday__name">${day}</span>
+            <span class="fday__icon">${d.icon}</span>
+            <span class="fday__hi">${Number.isFinite(d.hi) ? d.hi + '°' : '–'}</span>
+            <span class="fday__lo">${Number.isFinite(d.lo) ? d.lo + '°' : '–'}</span>
+          </div>`;
+      })
+      .join('');
+    this.forecast.hidden = false;
   }
 }

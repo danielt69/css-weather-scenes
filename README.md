@@ -13,10 +13,10 @@ bloom-lit sun, a moon over a starfield, thunderstorms with lightning, and fog.
 
 | Scene | What you see |
 |-------|--------------|
-| **Clear day** | Blue sky gradient, sun with bloom + atmospheric god-ray glow, light drifting clouds |
-| **Clear night** | Deep night gradient, glowing moon with directional moonlight, twinkling starfield |
+| **Clear day** | Blue sky gradient, a crisp round sun disc with bloom + atmospheric god-ray glow, light drifting clouds |
+| **Clear night** | Deep night gradient, a sharp round **cratered moon** (procedural lunar surface, maria + crater relief), twinkling starfield |
 | **Clouds** | Layered fBm-noise shader clouds drifting with parallax (overcast) |
-| **Rain** | Thousands of GPU streak particles, wind slant, splash ripples on a wet ground plane |
+| **Rain** | Thousands of GPU streak particles, wind slant, and **realistic ground splashes** — contact-flash + expanding ripple rings on a wet plane |
 | **Snow** | Drifting GPU snow with per-flake sway, soft pale sky |
 | **Thunderstorm** | Dark heavy clouds, driving rain, periodic lightning bolts + screen flash |
 | **Fog** | Dense exponential fog with faint low cloud |
@@ -24,10 +24,16 @@ bloom-lit sun, a moon over a starfield, thunderstorms with lightning, and fog.
 ## How it works
 
 - **Geolocation → [Open-Meteo](https://open-meteo.com)** (no API key). On load the app
-  asks for your location, fetches the current `weather_code` / `is_day` / `temperature`,
-  maps the WMO code to a scene, and shows it full-screen with a location + temperature
-  readout. If location is denied or the network fails, it falls back to a sensible
-  default (Tel Aviv / clear day) — never a blank screen.
+  asks for your location, fetches the current `weather_code` / `is_day` / `temperature` /
+  `apparent_temperature`, maps the WMO code to a scene, and shows it full-screen. If
+  location is denied or the network fails, it falls back to a sensible default
+  (Tel Aviv / clear day) — never a blank screen.
+- **Live conditions readout** (top-left): condition icon, current temperature, condition
+  text, location, and feels-like, with a pulsing **LIVE** indicator while tracking your
+  real local weather.
+- **7-day forecast** (centered glass widget): a row of day-columns — day name, weather
+  icon, and high / low — driven by the Open-Meteo daily forecast. Glassmorphism with
+  backdrop blur so it reads cleanly over the animated scene; responsive down to 390px.
 - **Manual override dock** at the bottom forces any scene; **◎ Live** returns to your
   real local weather.
 - **Rendering:** Three.js scene with an `EffectComposer` + `UnrealBloomPass` post chain.

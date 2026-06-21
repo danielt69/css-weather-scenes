@@ -174,7 +174,13 @@ const ui = new UI({
     autoMode = false;
     world.applyScene(key);
     ui.setActive(key, false);
-    ui.setReadout({ condition: SCENE_META[key].label, place: 'Manual', temp: null });
+    ui.setReadout({
+      condition: SCENE_META[key].label,
+      place: 'Manual',
+      temp: null,
+      feels: null,
+      icon: SCENE_META[key].icon,
+    });
   },
   onAuto: () => runAuto(true),
 });
@@ -201,7 +207,14 @@ async function runAuto(force = false) {
   if (!autoMode && !force) return; // user picked something while we waited
   world.applyScene(w.scene);
   ui.setActive(w.scene, true);
-  ui.setReadout({ condition: w.condition, place: w.place, temp: w.temp });
+  ui.setReadout({
+    condition: w.condition,
+    place: w.place,
+    temp: w.temp,
+    feels: w.feels,
+    icon: w.icon,
+  });
+  ui.setForecast(w.daily, w.place);
 }
 
 // initial scene so we never show a blank canvas, even before data lands
@@ -211,10 +224,24 @@ hideLoader();
 
 if (forcedScene && SCENES.includes(forcedScene)) {
   ui.setActive(forcedScene, false);
-  ui.setReadout({ condition: SCENE_META[forcedScene].label, place: 'Manual', temp: null });
+  ui.setReadout({
+    condition: SCENE_META[forcedScene].label,
+    place: 'Manual',
+    temp: null,
+    feels: null,
+    icon: SCENE_META[forcedScene].icon,
+  });
+  // Keep the forced visuals, but still surface real live data in the HUD and
+  // forecast widget so the manual scenes aren't data-less.
+  if (!noFetch) {
+    resolveWeather().then((w) => {
+      ui.setReadout({ temp: w.temp, feels: w.feels, place: w.place });
+      ui.setForecast(w.daily, w.place);
+    });
+  }
 } else if (!noFetch) {
   runAuto();
 } else {
   ui.setActive('clear-day', false);
-  ui.setReadout({ condition: 'Clear', place: 'Debug', temp: 22 });
+  ui.setReadout({ condition: 'Clear', place: 'Debug', temp: 22, feels: 21, icon: '☀️' });
 }

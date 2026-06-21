@@ -42,25 +42,79 @@ body {
   padding: 2rem;
 }
 
-/* ---------- Readout (top-left HUD) ---------- */
+/* ---------- Live readout (top-left HUD) ---------- */
 .readout {
   position: fixed;
   top: max(18px, env(safe-area-inset-top, 0px));
   left: 18px;
   z-index: 10;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: var(--glass);
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: linear-gradient(
+    160deg,
+    rgba(22, 30, 52, 0.55),
+    rgba(10, 15, 28, 0.42)
+  );
   border: 1px solid var(--stroke);
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  max-width: 70vw;
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  box-shadow:
+    0 10px 34px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  max-width: 72vw;
   transition: opacity 0.4s ease;
 }
 
+.readout__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.readout__icon {
+  font-size: 1.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.readout__temp {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.readout__live {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  margin-left: 2px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(127, 212, 255, 0.14);
+  border: 1px solid rgba(127, 212, 255, 0.35);
+  color: var(--accent);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.readout__live.is-on {
+  display: inline-flex;
+}
+.readout__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
 .readout__condition {
-  font-size: 1.05rem;
+  margin-top: 4px;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
@@ -71,14 +125,132 @@ body {
   display: flex;
   gap: 10px;
   align-items: baseline;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--ink-dim);
 }
 
-.readout__temp {
+.readout__feels {
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
+/* ---------- 7-day forecast (centered glass widget) ---------- */
+.forecast {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  width: min(760px, calc(100vw - 32px));
+  padding: 18px 20px 20px;
+  border-radius: 22px;
+  background: linear-gradient(
+    165deg,
+    rgba(26, 34, 58, 0.46),
+    rgba(10, 15, 28, 0.34)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: opacity 0.5s ease;
+}
+.forecast[hidden] {
+  display: none;
+}
+
+.forecast__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 0 2px;
+}
+.forecast__title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 255, 0.78);
+}
+.forecast__place {
+  font-size: 0.74rem;
+  color: var(--ink-dim);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+.forecast__row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.fday {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+.fday:hover {
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-2px);
+}
+.fday.is-today {
+  background: linear-gradient(
+    180deg,
+    rgba(127, 212, 255, 0.22),
+    rgba(127, 212, 255, 0.06)
+  );
+  border-color: rgba(127, 212, 255, 0.45);
+  box-shadow: 0 0 18px rgba(127, 212, 255, 0.25);
+}
+
+.fday__name {
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(234, 242, 255, 0.82);
+}
+.fday__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+}
+.fday__hi {
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
+}
+.fday__lo {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
 }
 
 /* ---------- Dock (bottom scene picker) ---------- */
@@ -274,16 +446,65 @@ body {
   }
   .readout {
     max-width: calc(100vw - 36px);
+    padding: 11px 14px;
+  }
+  .readout__temp {
+    font-size: 1.6rem;
+  }
+  .readout__icon {
+    font-size: 1.45rem;
+  }
+
+  /* keep the 7 columns visible on a 390px phone: tighten everything. */
+  .forecast {
+    width: calc(100vw - 20px);
+    padding: 13px 12px 14px;
+    border-radius: 18px;
+    /* nudged above dead-centre so it clears the bottom dock comfortably. */
+    top: 44%;
+  }
+  .forecast__head {
+    margin-bottom: 10px;
+  }
+  .forecast__title {
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+  }
+  .forecast__place {
+    font-size: 0.64rem;
+  }
+  .forecast__row {
+    gap: 4px;
+  }
+  .fday {
+    padding: 9px 2px;
+    gap: 5px;
+    border-radius: 10px;
+  }
+  .fday__name {
+    font-size: 0.58rem;
+  }
+  .fday__icon {
+    font-size: 1.15rem;
+  }
+  .fday__hi {
+    font-size: 0.78rem;
+  }
+  .fday__lo {
+    font-size: 0.66rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loading__orb {
+  .loading__orb,
+  .readout__dot {
     animation: none;
   }
   .dock,
   .dock-reopen,
-  .readout {
+  .readout,
+  .forecast,
+  .fday {
     transition: none;
   }
 }

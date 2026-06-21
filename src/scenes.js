@@ -49,7 +49,10 @@ export const SCENE_CONFIG = {
     ground: 0,
     lightning: false,
     fog: { color: '#0a1224', density: 0.0016 },
-    bloom: { strength: 0.85, radius: 0.8, threshold: 0.2 },
+    // high threshold + low strength so only the very brightest specular spots
+    // bloom: keeps the cratered moon disc crisp and round instead of a white
+    // blob, while bright stars still glint.
+    bloom: { strength: 0.35, radius: 0.35, threshold: 0.82 },
   },
 
   clouds: {
@@ -93,8 +96,8 @@ export const SCENE_CONFIG = {
     rain: 0.95,
     rainOpts: { color: '#cfe0ff', wind: 7, fall: 60 },
     snow: 0,
-    ground: 0.8,
-    groundColor: '#9fc0ff',
+    ground: 0.95,
+    groundColor: '#dcebff',
     lightning: false,
     fog: { color: '#6b7888', density: 0.0036 },
     bloom: { strength: 0.45, radius: 0.6, threshold: 0.7 },
@@ -141,8 +144,8 @@ export const SCENE_CONFIG = {
     rain: 1.0,
     rainOpts: { color: '#b9cdf0', wind: 11, fall: 75 },
     snow: 0,
-    ground: 0.9,
-    groundColor: '#aebfe6',
+    ground: 1.0,
+    groundColor: '#c8d8f4',
     lightning: true,
     fog: { color: '#2b3344', density: 0.0044 },
     bloom: { strength: 0.7, radius: 0.7, threshold: 0.55 },
